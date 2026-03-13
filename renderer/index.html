@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+    <title>WMPFDebugger</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Title Bar -->
+    <div class="titlebar" id="titlebar">
+        <div class="titlebar-drag">
+            <div class="titlebar-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <span class="titlebar-title">WMPFDebugger</span>
+        </div>
+        <div class="titlebar-controls">
+            <button class="titlebar-btn" id="btn-minimize" title="Minimize">
+                <svg width="12" height="12" viewBox="0 0 12 12"><rect y="5" width="12" height="1.5" fill="currentColor"/></svg>
+            </button>
+            <button class="titlebar-btn" id="btn-maximize" title="Maximize">
+                <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            </button>
+            <button class="titlebar-btn titlebar-btn-close" id="btn-close" title="Close">
+                <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <!-- Status Card -->
+            <div class="card status-card">
+                <div class="card-header">
+                    <h3>Service Status</h3>
+                </div>
+                <div class="status-indicator-wrapper">
+                    <div class="status-indicator" id="status-indicator">
+                        <div class="status-dot"></div>
+                    </div>
+                    <span class="status-text" id="status-text">Stopped</span>
+                </div>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" id="btn-start">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                        Start
+                    </button>
+                    <button class="btn btn-danger" id="btn-stop" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Port Configuration Card -->
+            <div class="card config-card">
+                <div class="card-header">
+                    <h3>Port Configuration</h3>
+                </div>
+                <div class="config-form">
+                    <div class="form-group">
+                        <label for="debug-port">Debug Port</label>
+                        <input type="number" id="debug-port" value="9421" min="1024" max="65535" class="form-input">
+                        <span class="form-hint">Internal debug server port</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="cdp-port">CDP Port</label>
+                        <input type="number" id="cdp-port" value="62000" min="1024" max="65535" class="form-input">
+                        <span class="form-hint">Chrome DevTools Protocol port</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WMPF Info Card -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h3>WMPF Information</h3>
+                    <button class="btn btn-small btn-secondary" id="btn-refresh-processes">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="info-section">
+                    <div class="info-label">Supported Versions</div>
+                    <div class="version-tags" id="version-tags">
+                        <span class="tag">Loading...</span>
+                    </div>
+                </div>
+                <div class="info-section">
+                    <div class="info-label">Detected Processes</div>
+                    <div class="process-list" id="process-list">
+                        <div class="process-empty">Click "Refresh" to scan processes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hook Plugins Card -->
+            <div class="card plugin-card">
+                <div class="card-header">
+                    <h3>Hook Plugins</h3>
+                    <div class="plugin-header-actions">
+                        <button class="btn btn-small btn-secondary" id="btn-import-file">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="17,8 12,3 7,8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Import File
+                        </button>
+                        <button class="btn btn-small btn-primary" id="btn-add-inline">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add Inline
+                        </button>
+                    </div>
+                </div>
+                <div class="plugin-list" id="plugin-list">
+                    <div class="plugin-empty">No plugins added. Click "Import File" or "Add Inline" to get started.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- Log Panel -->
+            <div class="card log-card">
+                <div class="card-header">
+                    <h3>Logs</h3>
+                    <div class="log-controls">
+                        <button class="btn btn-small btn-secondary" id="btn-clear-logs">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="log-container" id="log-container">
+                    <div class="log-entry log-info">
+                        <span class="log-time">--:--:--</span>
+                        <span class="log-message">Welcome to WMPFDebugger. Click "Start" to begin debugging.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="bottom-left">
+            <span class="bottom-info" id="bottom-info">Ready</span>
+        </div>
+        <div class="bottom-right">
+            <button class="btn btn-accent" id="btn-open-devtools">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/>
+                </svg>
+                Open DevTools
+            </button>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

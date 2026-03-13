@@ -1,9 +1,15 @@
 {
   "name": "WMPFDebugger",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "dist-electron/main.js",
   "license": "GPL-2.0-only",
   "author": "evi0s",
+  "scripts": {
+    "cli": "npx ts-node src/index.ts",
+    "build:electron": "npx tsc -p tsconfig.electron.json",
+    "start": "npm run build:electron && npx electron .",
+    "dev": "npm run build:electron && npx electron ."
+  },
   "dependencies": {
     "frida": "^17.3.2",
     "protobufjs": "^7.5.4",
@@ -12,6 +18,7 @@
   "devDependencies": {
     "@types/node": "^24.5.2",
     "@types/ws": "^8.18.1",
+    "electron": "^33.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   }

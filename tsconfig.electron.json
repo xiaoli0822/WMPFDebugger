@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "lib": ["es2020"],
+    "outDir": "dist-electron",
+    "rootDir": "electron",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "allowJs": false,
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "sourceMap": true
+  },
+  "include": ["electron/**/*.ts"],
+  "exclude": ["node_modules", "src/third-party"]
+}
