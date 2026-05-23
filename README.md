@@ -70,7 +70,7 @@ To upgrade to the latest WMPF (WeChat version < 4.x), type in `:showcmdwnd` in t
 ## Prerequisites
 
 * node.js (requires at least LTS v22)
-    - yarn
+    - npm
 * chromium-based browsers (e.g., Chrome, Edge, etc.)
 
 ## Quick Start
@@ -80,13 +80,13 @@ To upgrade to the latest WMPF (WeChat version < 4.x), type in `:showcmdwnd` in t
 ```bash
 git clone https://github.com/evi0s/WMPFDebugger
 cd WMPFDebugger
-yarn
+npm ci
 ```
 
 **Step 2.** Run `src/index.ts` to launch debug server and proxy server, and inject hook script to miniapp runtime.
 
 ```bash
-npx ts-node src/index.ts
+npm run cli
 ```
 
 > Note: After this step, you need to launch the miniapp BEFORE launching the devtools, otherwise you will probably need to kill the server and redo the steps 2 to 4 again.

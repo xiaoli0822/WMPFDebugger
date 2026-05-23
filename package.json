@@ -2,13 +2,17 @@
   "name": "WMPFDebugger",
   "version": "1.0.0",
   "main": "dist-electron/main.js",
+  "packageManager": "npm@11.9.0",
   "license": "GPL-2.0-only",
   "author": "evi0s",
   "scripts": {
-    "cli": "npx ts-node src/index.ts",
-    "build:electron": "npx tsc -p tsconfig.electron.json",
-    "start": "npm run build:electron && npx electron .",
-    "dev": "npm run build:electron && npx electron ."
+    "cli": "ts-node src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "test": "npm run typecheck && node --test tests\\pluginPanelLogic.test.cjs tests\\builtinHookTemplates.test.cjs",
+    "build": "npm run build:electron",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "start": "npm run build:electron && electron .",
+    "dev": "npm run build:electron && electron ."
   },
   "dependencies": {
     "frida": "^17.3.2",

@@ -67,7 +67,7 @@
 ## 准备
 
 * node.js (需要至少 LTS v22)
-    - yarn 包管理器
+    - npm 包管理器
 * 基于的 chromium 浏览器，例如 Chrome, Edge, 等等
 
 ## 使用
@@ -77,13 +77,13 @@
 ```bash
 git clone https://github.com/evi0s/WMPFDebugger
 cd WMPFDebugger
-yarn
+npm ci
 ```
 
 **第 2 步** 运行 `src/index.ts`。该命令会启动调试服务器和 CDP 代理服务器，同时相关 hook 代码也会被自动注入到小程序运行时中
 
 ```bash
-npx ts-node src/index.ts
+npm run cli
 ```
 
 > 注意: 在这个步骤之后，你需要先启动小程序（第三步），再打开开发者工具（第四步）。如果操作顺序反了你可能需要从重新第二步开始

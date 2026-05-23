@@ -22,6 +22,9 @@ const bufferToHexString = (buffer: ArrayBuffer) => {
 
 const debug_server = (options: CliOptions, logger: Logger) => {
     const wss = new WebSocketServer({ port: options.debugPort });
+    wss.on("error", (error) => {
+        logger.error("[server] debug server err:", error);
+    });
     logger.info(
         `[server] debug server running on ws://localhost:${options.debugPort}`,
     );
@@ -103,11 +106,14 @@ const debug_server = (options: CliOptions, logger: Logger) => {
 
 const proxy_server = (options: CliOptions, logger: Logger) => {
     const wss = new WebSocketServer({ port: options.cdpPort });
+    wss.on("error", (error) => {
+        logger.error("[server] proxy server err:", error);
+    });
     logger.info(
         `[server] proxy server running on ws://localhost:${options.cdpPort}`,
     );
     logger.info(
-        `[server] link: devtools://devtools/bundled/inspector.html?ws=127.0.0.1:${options.cdpPort}`,
+        `[server] cdp websocket endpoint: ws://127.0.0.1:${options.cdpPort}`,
     );
 
     const onMessage = (message: string) => {
@@ -158,21 +164,22 @@ const frida_server = async (options: CliOptions, logger: Logger) => {
         .pop();
     if (wmpfPid === undefined) {
         throw new Error("[frida] WeChatAppEx.exe process not found");
-        return;
     }
     const wmpfProcess = processes.filter(
         (process) => process.pid === wmpfPid,
     )[0];
+    if (!wmpfProcess) {
+        throw new Error(`[frida] parent process not found: ${wmpfPid}`);
+    }
     const wmpfProcessPath = wmpfProcess.parameters.path as string | undefined;
     const wmpfVersionMatch = wmpfProcessPath
         ? wmpfProcessPath.match(/\d+/g)
         : "";
     const wmpfVersion = wmpfVersionMatch
-        ? new Number(wmpfVersionMatch.pop())
+        ? Number(wmpfVersionMatch[wmpfVersionMatch.length - 1])
         : 0;
-    if (wmpfVersion === 0) {
+    if (!Number.isInteger(wmpfVersion) || wmpfVersion <= 0) {
         throw new Error("[frida] error in find wmpf version");
-        return;
     }
 
     // attach to process
@@ -194,7 +201,6 @@ const frida_server = async (options: CliOptions, logger: Logger) => {
         ).toString();
     } catch (e) {
         throw new Error("[frida] hook script not found");
-        return;
     }
 
     let configContent: string | null = null;
@@ -215,7 +221,6 @@ const frida_server = async (options: CliOptions, logger: Logger) => {
 
     if (scriptContent === null || configContent === null) {
         throw new Error("[frida] unable to find hook script");
-        return;
     }
 
     // load script
@@ -242,9 +247,14 @@ const main = async () => {
     const logger = create_logger(options);
     debug_server(options, logger);
     proxy_server(options, logger);
-    frida_server(options, logger);
+    await frida_server(options, logger);
 };
 
 (async () => {
-    await main();
+    try {
+        await main();
+    } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        process.exitCode = 1;
+    }
 })();

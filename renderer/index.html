@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Title Bar -->
+    <!-- 标题栏 -->
     <div class="titlebar" id="titlebar">
         <div class="titlebar-drag">
             <div class="titlebar-icon">
@@ -21,94 +21,125 @@
             <span class="titlebar-title">WMPFDebugger</span>
         </div>
         <div class="titlebar-controls">
-            <button class="titlebar-btn" id="btn-minimize" title="Minimize">
+            <button class="titlebar-btn" id="btn-minimize" title="最小化">
                 <svg width="12" height="12" viewBox="0 0 12 12"><rect y="5" width="12" height="1.5" fill="currentColor"/></svg>
             </button>
-            <button class="titlebar-btn" id="btn-maximize" title="Maximize">
+            <button class="titlebar-btn" id="btn-maximize" title="最大化">
                 <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
             </button>
-            <button class="titlebar-btn titlebar-btn-close" id="btn-close" title="Close">
+            <button class="titlebar-btn titlebar-btn-close" id="btn-close" title="关闭">
                 <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5"/></svg>
             </button>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- 主内容 -->
     <div class="main-content">
-        <!-- Left Panel -->
+        <!-- 左侧面板 -->
         <div class="left-panel">
-            <!-- Status Card -->
+            <!-- 状态卡片 -->
             <div class="card status-card">
                 <div class="card-header">
-                    <h3>Service Status</h3>
+                    <h3>服务状态</h3>
                 </div>
                 <div class="status-indicator-wrapper">
                     <div class="status-indicator" id="status-indicator">
                         <div class="status-dot"></div>
                     </div>
-                    <span class="status-text" id="status-text">Stopped</span>
+                    <span class="status-text" id="status-text">已停止</span>
                 </div>
                 <div class="control-buttons">
                     <button class="btn btn-primary" id="btn-start">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                        Start
+                        启动
                     </button>
                     <button class="btn btn-danger" id="btn-stop" disabled>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-                        Stop
+                        停止
                     </button>
                 </div>
             </div>
 
-            <!-- Port Configuration Card -->
+            <div class="card workflow-card">
+                <div class="card-header">
+                    <h3>调试流程</h3>
+                    <span class="workflow-badge" id="workflow-badge">等待扫描</span>
+                </div>
+                <div class="workflow-steps">
+                    <div class="workflow-step" id="workflow-step-process-row">
+                        <div class="workflow-step-index">1</div>
+                        <div class="workflow-step-content">
+                            <div class="workflow-step-title">检测 WMPF 进程</div>
+                            <div class="workflow-step-desc" id="workflow-step-process">应用启动后会自动扫描。</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step" id="workflow-step-service-row">
+                        <div class="workflow-step-index">2</div>
+                        <div class="workflow-step-content">
+                            <div class="workflow-step-title">启动调试服务</div>
+                            <div class="workflow-step-desc" id="workflow-step-service">配置端口后启动服务。</div>
+                        </div>
+                    </div>
+                    <div class="workflow-step" id="workflow-step-devtools-row">
+                        <div class="workflow-step-index">3</div>
+                        <div class="workflow-step-content">
+                            <div class="workflow-step-title">打开 DevTools</div>
+                            <div class="workflow-step-desc" id="workflow-step-devtools">服务运行后可用。</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="workflow-tip" id="workflow-tip">应用会提示你下一步操作。</div>
+            </div>
+
+            <!-- 端口配置卡片 -->
             <div class="card config-card">
                 <div class="card-header">
-                    <h3>Port Configuration</h3>
+                    <h3>端口配置</h3>
                 </div>
                 <div class="config-form">
                     <div class="form-group">
-                        <label for="debug-port">Debug Port</label>
-                        <input type="number" id="debug-port" value="9421" min="1024" max="65535" class="form-input">
-                        <span class="form-hint">Internal debug server port</span>
+                        <label for="debug-port">调试端口</label>
+                        <input type="number" id="debug-port" value="9421" min="1024" max="65535" step="1" class="form-input">
+                        <span class="form-hint">内部调试服务器端口</span>
                     </div>
                     <div class="form-group">
-                        <label for="cdp-port">CDP Port</label>
-                        <input type="number" id="cdp-port" value="62000" min="1024" max="65535" class="form-input">
-                        <span class="form-hint">Chrome DevTools Protocol port</span>
+                        <label for="cdp-port">CDP 端口</label>
+                        <input type="number" id="cdp-port" value="62000" min="1024" max="65535" step="1" class="form-input">
+                        <span class="form-hint">Chrome DevTools Protocol 端口</span>
                     </div>
                 </div>
             </div>
 
-            <!-- WMPF Info Card -->
+            <!-- WMPF 信息卡片 -->
             <div class="card info-card">
                 <div class="card-header">
-                    <h3>WMPF Information</h3>
+                    <h3>WMPF 信息</h3>
                     <button class="btn btn-small btn-secondary" id="btn-refresh-processes">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
                             <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
                         </svg>
-                        Refresh
+                        刷新
                     </button>
                 </div>
                 <div class="info-section">
-                    <div class="info-label">Supported Versions</div>
+                    <div class="info-label">支持版本</div>
                     <div class="version-tags" id="version-tags">
-                        <span class="tag">Loading...</span>
+                        <span class="tag">加载中...</span>
                     </div>
                 </div>
                 <div class="info-section">
-                    <div class="info-label">Detected Processes</div>
+                    <div class="info-label">检测到的进程</div>
                     <div class="process-list" id="process-list">
-                        <div class="process-empty">Click "Refresh" to scan processes</div>
+                        <div class="process-empty">点击“刷新”扫描进程</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Hook Plugins Card -->
+            <!-- Hook 插件卡片 -->
             <div class="card plugin-card">
                 <div class="card-header">
-                    <h3>Hook Plugins</h3>
+                    <h3>Hook 插件</h3>
                     <div class="plugin-header-actions">
                         <button class="btn btn-small btn-secondary" id="btn-import-file">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -116,63 +147,113 @@
                                 <polyline points="17,8 12,3 7,8"/>
                                 <line x1="12" y1="3" x2="12" y2="15"/>
                             </svg>
-                            Import File
+                            导入文件
                         </button>
                         <button class="btn btn-small btn-primary" id="btn-add-inline">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"/>
                                 <line x1="5" y1="12" x2="19" y2="12"/>
                             </svg>
-                            Add Inline
+                            新建内联
                         </button>
                     </div>
                 </div>
+                <div class="plugin-toolbar">
+                    <div class="plugin-filter-group">
+                        <input class="plugin-search-input" id="plugin-search-input" type="search" placeholder="搜索插件或模板" aria-label="搜索插件或模板">
+                        <select class="plugin-filter-select" id="plugin-enabled-filter" title="按启用状态筛选插件">
+                            <option value="all">全部状态</option>
+                            <option value="enabled">仅启用</option>
+                            <option value="disabled">仅禁用</option>
+                        </select>
+                    </div>
+                    <div class="plugin-config-actions">
+                        <button class="btn btn-small btn-secondary" id="btn-export-plugins">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7,10 12,15 17,10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            导出配置
+                        </button>
+                        <button class="btn btn-small btn-secondary" id="btn-import-plugins">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17,8 12,3 7,8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            导入配置
+                        </button>
+                    </div>
+                </div>
+                <div class="builtin-template-section">
+                    <div class="builtin-template-title">内置模板</div>
+                    <div class="builtin-template-list" id="builtin-template-list">
+                        <div class="plugin-empty">正在加载内置模板...</div>
+                    </div>
+                </div>
+                <div class="plugin-summary" id="plugin-summary">显示 0 / 0 个插件</div>
                 <div class="plugin-list" id="plugin-list">
-                    <div class="plugin-empty">No plugins added. Click "Import File" or "Add Inline" to get started.</div>
+                    <div class="plugin-empty">还没有插件。点击“导入文件”或“新建内联”开始。</div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel -->
+        <!-- 右侧面板 -->
         <div class="right-panel">
-            <!-- Log Panel -->
+            <!-- 日志面板 -->
             <div class="card log-card">
                 <div class="card-header">
-                    <h3>Logs</h3>
+                    <h3>日志</h3>
                     <div class="log-controls">
+                        <select class="log-filter-select" id="log-level-filter" title="按日志级别筛选">
+                            <option value="all">全部</option>
+                            <option value="info">信息</option>
+                            <option value="success">成功</option>
+                            <option value="warn">警告</option>
+                            <option value="error">错误</option>
+                        </select>
+                        <input class="log-search-input" id="log-search-input" type="search" placeholder="搜索日志" aria-label="搜索日志">
+                        <button class="btn btn-small btn-secondary" id="btn-copy-logs">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                            </svg>
+                            复制
+                        </button>
                         <button class="btn btn-small btn-secondary" id="btn-clear-logs">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                             </svg>
-                            Clear
+                            清空
                         </button>
                     </div>
                 </div>
                 <div class="log-container" id="log-container">
                     <div class="log-entry log-info">
                         <span class="log-time">--:--:--</span>
-                        <span class="log-message">Welcome to WMPFDebugger. Click "Start" to begin debugging.</span>
+                        <span class="log-message">欢迎使用 WMPFDebugger。点击“启动”开始调试。</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Bar -->
+    <!-- 底部栏 -->
     <div class="bottom-bar">
         <div class="bottom-left">
-            <span class="bottom-info" id="bottom-info">Ready</span>
+            <span class="bottom-info" id="bottom-info">就绪</span>
         </div>
         <div class="bottom-right">
-            <button class="btn btn-accent" id="btn-open-devtools">
+            <button class="btn btn-accent" id="btn-open-devtools" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/>
                 </svg>
-                Open DevTools
+                打开 DevTools
             </button>
         </div>
     </div>
 
-    <script src="renderer.js"></script>
+    <script type="module" src="renderer.js"></script>
 </body>
 </html>

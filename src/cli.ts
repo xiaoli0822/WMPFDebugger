@@ -34,7 +34,7 @@ const parse_port = (
     }
 
     const port = Number(value);
-    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    if (!Number.isInteger(port) || port < 1024 || port > 65535) {
         throw new Error(`[main] invalid ${name}: ${value}`);
     }
 
@@ -58,9 +58,19 @@ const parse_cli_options = (): CliOptions => {
         process.exit(0);
     }
 
+    const debugPort = parse_port(
+        "--debug-port",
+        values["debug-port"],
+        DEBUG_PORT,
+    );
+    const cdpPort = parse_port("--cdp-port", values["cdp-port"], CDP_PORT);
+    if (debugPort === cdpPort) {
+        throw new Error("[main] debug port and cdp port must be different");
+    }
+
     return {
-        debugPort: parse_port("--debug-port", values["debug-port"], DEBUG_PORT),
-        cdpPort: parse_port("--cdp-port", values["cdp-port"], CDP_PORT),
+        debugPort,
+        cdpPort,
         debugMain: values["debug-main"] ?? false,
         debugFrida: values["debug-frida"] ?? false,
     };
