@@ -8,7 +8,7 @@
   "scripts": {
     "cli": "ts-node src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
-    "test": "npm run typecheck && node --test tests\\pluginPanelLogic.test.cjs tests\\builtinHookTemplates.test.cjs",
+    "test": "npm run typecheck && node --test tests\\pluginPanelLogic.test.cjs tests\\builtinHookTemplates.test.cjs tests\\logsPanelLogic.test.cjs",
     "build": "npm run build:electron",
     "build:electron": "tsc -p tsconfig.electron.json",
     "start": "npm run build:electron && electron .",

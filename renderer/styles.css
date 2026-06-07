@@ -644,6 +644,20 @@ body {
     flex: 1;
 }
 
+.log-repeat-badge {
+    flex-shrink: 0;
+    align-self: flex-start;
+    min-width: 36px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background-color: rgba(137, 180, 250, 0.16);
+    border: 1px solid rgba(137, 180, 250, 0.28);
+    color: var(--color-info);
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+}
+
 .log-info .log-message {
     color: var(--text-primary);
 }
@@ -658,22 +672,6 @@ body {
 
 .log-error .log-message {
     color: var(--color-error);
-}
-
-/* Log entry fade-in animation */
-.log-entry {
-    animation: logFadeIn 0.2s ease-out;
-}
-
-@keyframes logFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* ===== Bottom Bar ===== */

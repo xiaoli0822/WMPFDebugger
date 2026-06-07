@@ -8,16 +8,21 @@ export function createLogsModule(options) {
         getCurrentTime,
         formatErrorMessage,
         maxEntries = 1000,
+        maxRenderedEntries = 400,
+        duplicateCollapseThreshold = 3,
     } = options;
 
     let entries = [];
     let filterValue = levelFilter ? levelFilter.value : "all";
     let searchQuery = searchInput ? searchInput.value : "";
+    let pendingRender = false;
+    let pendingScrollToBottom = false;
+    let lastRenderKey = "";
 
     if (clearButton) {
         clearButton.addEventListener("click", () => {
             entries = [];
-            renderLogEntries();
+            scheduleRender();
             addLog({ timestamp: getCurrentTime(), level: "info", message: "日志已清空" });
         });
     }
@@ -31,7 +36,10 @@ export function createLogsModule(options) {
             }
 
             const text = visibleLogs
-                .map((entry) => `[${entry.timestamp}] [${getLogLevelLabel(entry.level)}] ${entry.message}`)
+                .map((entry) => {
+                    const duplicateSuffix = entry.repeatCount > 1 ? ` [重复 ${entry.repeatCount} 次]` : "";
+                    return `[${entry.timestamp}] [${getLogLevelLabel(entry.level)}] ${entry.message}${duplicateSuffix}`;
+                })
                 .join("\n");
 
             try {
@@ -46,34 +54,105 @@ export function createLogsModule(options) {
     if (levelFilter) {
         levelFilter.addEventListener("change", () => {
             filterValue = levelFilter.value;
-            renderLogEntries();
+            scheduleRender();
         });
     }
 
     if (searchInput) {
         searchInput.addEventListener("input", () => {
             searchQuery = searchInput.value;
-            renderLogEntries();
+            scheduleRender();
         });
     }
 
     function initialize(initialEntries) {
-        entries = Array.isArray(initialEntries) ? initialEntries.map(normalizeEntry) : [];
+        entries = Array.isArray(initialEntries)
+            ? initialEntries.map((entry) => normalizeEntry(entry))
+            : [];
         renderLogEntries();
     }
 
     function addLog(entry) {
-        entries.push(normalizeEntry(entry));
+        const normalized = normalizeEntry(entry);
+        const lastEntry = entries[entries.length - 1];
 
-        while (entries.length > maxEntries) {
-            entries.shift();
+        if (canCollapseEntry(lastEntry, normalized)) {
+            lastEntry.repeatCount += 1;
+            lastEntry.lastTimestamp = normalized.timestamp;
+        } else {
+            entries.push(normalized);
         }
 
-        renderLogEntries(true);
+        trimEntries();
+        scheduleRender(true);
+    }
+
+    function scheduleRender(scrollToBottom = false) {
+        pendingScrollToBottom = pendingScrollToBottom || scrollToBottom;
+        if (pendingRender) {
+            return;
+        }
+
+        pendingRender = true;
+        requestAnimationFrame(() => {
+            pendingRender = false;
+            const shouldScroll = pendingScrollToBottom;
+            pendingScrollToBottom = false;
+            renderLogEntries(shouldScroll);
+        });
     }
 
     function renderLogEntries(scrollToBottom = false) {
         const visibleLogs = getVisibleLogEntries();
+        const nextRenderKey = buildRenderKey(visibleLogs);
+        const canAppendIncrementally =
+            scrollToBottom &&
+            filterValue === "all" &&
+            !searchQuery.trim() &&
+            canUseIncrementalAppend(visibleLogs, nextRenderKey);
+
+        if (canAppendIncrementally) {
+            renderIncrementalEntries(visibleLogs);
+        } else {
+            renderFullEntries(visibleLogs);
+        }
+
+        lastRenderKey = nextRenderKey;
+
+        if (scrollToBottom) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    function renderIncrementalEntries(visibleLogs) {
+        const renderedCount = container.childElementCount;
+        const nextCount = visibleLogs.length;
+
+        if (nextCount < renderedCount) {
+            renderFullEntries(visibleLogs);
+            return;
+        }
+
+        if (nextCount === renderedCount && nextCount > 0) {
+            const lastVisibleEntry = visibleLogs[nextCount - 1];
+            const lastElement = container.lastElementChild;
+            if (!lastElement) {
+                renderFullEntries(visibleLogs);
+                return;
+            }
+
+            updateLogEntryElement(lastElement, lastVisibleEntry);
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        for (let index = renderedCount; index < nextCount; index += 1) {
+            fragment.appendChild(createLogEntryElement(visibleLogs[index]));
+        }
+        container.appendChild(fragment);
+    }
+
+    function renderFullEntries(visibleLogs) {
         container.replaceChildren();
 
         if (visibleLogs.length === 0) {
@@ -84,26 +163,33 @@ export function createLogsModule(options) {
             return;
         }
 
+        const fragment = document.createDocumentFragment();
         visibleLogs.forEach((entry) => {
-            container.appendChild(createLogEntryElement(entry));
+            fragment.appendChild(createLogEntryElement(entry));
         });
-
-        if (scrollToBottom) {
-            container.scrollTop = container.scrollHeight;
-        }
+        container.appendChild(fragment);
     }
 
     function getVisibleLogEntries() {
         const keyword = searchQuery.trim().toLowerCase();
-        return entries.filter((entry) => {
+        const filtered = entries.filter((entry) => {
             if (filterValue !== "all" && entry.level !== filterValue) {
                 return false;
             }
             if (!keyword) {
                 return true;
             }
-            return `${entry.timestamp} ${getLogLevelLabel(entry.level)} ${entry.message}`.toLowerCase().includes(keyword);
+
+            const repeatText = entry.repeatCount > 1 ? ` 重复 ${entry.repeatCount}` : "";
+            return `${entry.lastTimestamp} ${getLogLevelLabel(entry.level)} ${entry.message}${repeatText}`
+                .toLowerCase()
+                .includes(keyword);
         });
+
+        if (filtered.length <= maxRenderedEntries) {
+            return filtered;
+        }
+        return filtered.slice(filtered.length - maxRenderedEntries);
     }
 
     function createLogEntryElement(entry) {
@@ -112,7 +198,7 @@ export function createLogsModule(options) {
 
         const timeSpan = document.createElement("span");
         timeSpan.className = "log-time";
-        timeSpan.textContent = entry.timestamp;
+        timeSpan.textContent = entry.lastTimestamp;
 
         const msgSpan = document.createElement("span");
         msgSpan.className = "log-message";
@@ -120,14 +206,96 @@ export function createLogsModule(options) {
 
         logEntry.appendChild(timeSpan);
         logEntry.appendChild(msgSpan);
+
+        if (entry.repeatCount >= duplicateCollapseThreshold) {
+            const repeatBadge = document.createElement("span");
+            repeatBadge.className = "log-repeat-badge";
+            repeatBadge.textContent = `x${entry.repeatCount}`;
+            logEntry.appendChild(repeatBadge);
+        }
+
         return logEntry;
+    }
+
+    function updateLogEntryElement(element, entry) {
+        if (!(element instanceof HTMLElement)) {
+            return;
+        }
+
+        element.className = `log-entry log-${entry.level}`;
+        const timeSpan = element.querySelector(".log-time");
+        const msgSpan = element.querySelector(".log-message");
+        let badge = element.querySelector(".log-repeat-badge");
+
+        if (timeSpan) {
+            timeSpan.textContent = entry.lastTimestamp;
+        }
+        if (msgSpan) {
+            msgSpan.textContent = entry.message;
+        }
+
+        if (entry.repeatCount >= duplicateCollapseThreshold) {
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "log-repeat-badge";
+                element.appendChild(badge);
+            }
+            badge.textContent = `x${entry.repeatCount}`;
+        } else if (badge) {
+            badge.remove();
+        }
+    }
+
+    function trimEntries() {
+        while (entries.length > maxEntries) {
+            entries.shift();
+        }
+    }
+
+    function canCollapseEntry(previous, next) {
+        return Boolean(
+            previous &&
+            previous.level === next.level &&
+            previous.message === next.message
+        );
+    }
+
+    function canUseIncrementalAppend(visibleLogs, nextRenderKey) {
+        if (container.childElementCount === 0) {
+            return false;
+        }
+        if (container.firstElementChild && container.firstElementChild.classList.contains("log-empty")) {
+            return false;
+        }
+        if (!lastRenderKey) {
+            return false;
+        }
+
+        const previousKeys = lastRenderKey.split("\n");
+        const currentKeys = visibleLogs.map(getEntryKey);
+        if (currentKeys.length < previousKeys.length) {
+            return false;
+        }
+
+        const prefix = currentKeys.slice(0, previousKeys.length).join("\n");
+        return prefix === lastRenderKey && nextRenderKey.startsWith(prefix);
+    }
+
+    function buildRenderKey(visibleLogs) {
+        return visibleLogs.map(getEntryKey).join("\n");
+    }
+
+    function getEntryKey(entry) {
+        return `${entry.level}\u0000${entry.message}\u0000${entry.lastTimestamp}\u0000${entry.repeatCount}`;
     }
 
     function normalizeEntry(entry) {
         return {
             timestamp: String((entry && entry.timestamp) || getCurrentTime()),
+            lastTimestamp: String((entry && entry.timestamp) || getCurrentTime()),
             level: normalizeLogLevel(entry && entry.level),
             message: String((entry && entry.message) || ""),
+            repeatCount: 1,
         };
     }
 

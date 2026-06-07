@@ -4,6 +4,7 @@ import path from "node:path";
 import WebSocket, { WebSocketServer } from "ws";
 import { BuiltinHookTemplate } from "./builtinHookTemplates";
 import { HookManager, HookPlugin } from "./hookManager";
+import { extractHookPluginConsoleLog } from "./hookPluginConsole";
 
 const codex = require("../src/third-party/RemoteDebugCodex.js");
 const messageProto = require("../src/third-party/WARemoteDebugProtobuf.js");
@@ -72,6 +73,7 @@ export class DebugService extends EventEmitter {
     private operationPromise: Promise<void> = Promise.resolve();
     private starting: boolean = false;
     private stopping: boolean = false;
+    private hookConsoleRuntimeEnabled: boolean = false;
 
     constructor(configDir: string, legacyConfigPath?: string) {
         super();
@@ -330,6 +332,7 @@ export class DebugService extends EventEmitter {
             this.resetHookInjectionState("服务停止");
             this.backendConnected = false;
             this.clearPendingCdpResponses("服务停止");
+            this.hookConsoleRuntimeEnabled = false;
 
             this.running = false;
             this.emit("statusChange", false);
@@ -375,6 +378,7 @@ export class DebugService extends EventEmitter {
         this.injectedClients.clear();
         this.injectedScriptIdentifiers.clear();
         this.injectionFailureCounts.clear();
+        this.hookConsoleRuntimeEnabled = false;
         if (hadState) {
             this.log("info", `[hook] 已重置注入状态：${reason}`);
         }
@@ -484,6 +488,7 @@ export class DebugService extends EventEmitter {
             }
 
             if (unwrappedData.category === "chromeDevtoolsResult") {
+                this.handleHookPluginConsoleMessage(unwrappedData.data.payload);
                 this.debugMessageEmitter.emit("cdpmessage", unwrappedData.data.payload);
             }
         };
@@ -717,7 +722,24 @@ ${source}
         this.log("info", `[hook] 正在注入 ${enabledCount} 个已启用插件...`);
 
         try {
-            // 步骤 1：启用 Page domain。
+            // 步骤 1：启用 Runtime domain，用于接收插件 console 日志。
+            if (!this.hookConsoleRuntimeEnabled) {
+                const runtimeEnableResult = await this.sendCdpCommand("Runtime.enable");
+                if (runtimeEnableResult === null) {
+                    this.log("error", "[hook] 启用 Runtime 域失败（超时）");
+                    return "failed";
+                }
+
+                if (runtimeEnableResult.error) {
+                    this.log("error", `[hook] Runtime.enable 失败：${JSON.stringify(runtimeEnableResult.error)}`);
+                    return "failed";
+                }
+
+                this.hookConsoleRuntimeEnabled = true;
+                this.log("info", "[hook] Runtime 域已启用，将捕获插件日志");
+            }
+
+            // 步骤 2：启用 Page domain。
             const enableResult = await this.sendCdpCommand("Page.enable");
             if (enableResult === null) {
                 this.log("error", "[hook] 启用 Page 域失败（超时）");
@@ -737,7 +759,7 @@ ${source}
                 return "failed";
             }
 
-            // 步骤 2：添加组合脚本，让新文档加载时执行。
+            // 步骤 3：添加组合脚本，让新文档加载时执行。
             const addScriptResult = await this.sendCdpCommand("Page.addScriptToEvaluateOnNewDocument", {
                 source: guardedScript,
             });
@@ -787,6 +809,14 @@ ${source}
 
             await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
+    }
+
+    private handleHookPluginConsoleMessage(payload: string): void {
+        const pluginLog = extractHookPluginConsoleLog(payload);
+        if (!pluginLog) {
+            return;
+        }
+        this.log(pluginLog.level, pluginLog.message);
     }
 
     private async startFridaServer(): Promise<void> {

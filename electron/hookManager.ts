@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { BuiltinHookTemplate, getBuiltinHookTemplateById, getBuiltinHookTemplates } from "./builtinHookTemplates";
+import { buildHookPluginConsolePrefix } from "./hookPluginConsole";
 
 export interface HookPlugin {
     id: string;
@@ -234,8 +235,8 @@ export class HookManager {
         return enabledPlugins
             .map((p) => {
                 const safeName = this.sanitizeForComment(p.name);
-                const logLabel = JSON.stringify(`[HookPlugin:${safeName}]`);
-                return `// === Hook 插件：${safeName}（${p.id}） ===\ntry {\n${p.script}\n} catch(__hookErr__) { console.error(${logLabel}, __hookErr__); }`;
+                const logLabel = JSON.stringify(buildHookPluginConsolePrefix(safeName));
+                return `// === Hook 插件：${safeName}（${p.id}） ===\ntry {\n${this.wrapPluginScriptWithConsoleBridge(p.script, safeName)}\n} catch(__hookErr__) { console.error(${logLabel}, __hookErr__); }`;
             })
             .join("\n\n");
     }
@@ -427,6 +428,12 @@ export class HookManager {
 
     private sanitizeForComment(value: string): string {
         return this.normalizeName(value).replace(/\*\//g, "* /");
+    }
+
+    private wrapPluginScriptWithConsoleBridge(script: string, pluginName: string): string {
+        const safeName = this.sanitizeForComment(pluginName);
+        const consolePrefix = JSON.stringify(buildHookPluginConsolePrefix(safeName));
+        return `(() => {\nconst __hookPluginPrefix = ${consolePrefix};\nconst __hookPluginConsole = console;\nconst __hookPluginWrapConsole = (method) => (...args) => __hookPluginConsole[method](__hookPluginPrefix, ...args);\nconst console = {\n    ...__hookPluginConsole,\n    log: __hookPluginWrapConsole("log"),\n    info: __hookPluginWrapConsole("info"),\n    warn: __hookPluginWrapConsole("warn"),\n    error: __hookPluginWrapConsole("error"),\n    debug: __hookPluginWrapConsole("debug"),\n};\n${script}\n})();`;
     }
 
     private generateId(): string {
